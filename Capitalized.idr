@@ -41,29 +41,35 @@ beginsUnique {c1} {c2} _ _ = believe_me (Refl {A=Char} {x=c1})
 
 isNonEmpty : (s : String) -> Dec (c:Char ** Begins c s)
 isNonEmpty s with (strM s)
-  isNonEmpty "" | StrNil = No (\(_ ** bad) => beginsNonEmpty bad)
+  isNonEmpty ""             | StrNil = No (\(_ ** beginsEmpty) => beginsNonEmpty beginsEmpty)
   isNonEmpty (strCons x xs) | (StrCons x xs) = Yes (x ** MkBegins x xs)
 
--- s capitalized is defined as: c begins s and c is uppercase
+isNonEmptyNoWith : (s : String) -> Dec (c:Char ** Begins c s)
+isNonEmptyNoWith s = case strM s of
+  StrNil       => No (\(_  ** beginsEmpty) => beginsNonEmpty beginsEmpty)
+  StrCons x xs => Yes (x ** MkBegins x xs)
+
+-- "s capitalized" is defined as: c begins s and c is uppercase, for some c
 data IsCapitalized : String -> Type where
   MkIsCapitalized : Begins c s -> IsUpper c -> IsCapitalized s
 
 isCapitalized : (s : String) -> Dec (IsCapitalized s)
 isCapitalized s = case isNonEmpty s of
   Yes (c ** beginsCS) => case isUpper' c of
-    Yes cUpper => Yes (MkIsCapitalized beginsCS cUpper)
+    Yes cUpper   => Yes (MkIsCapitalized beginsCS cUpper)
     No cNotUpper => No (\(MkIsCapitalized beginsDS dUpper) =>
-      -- argument spelled out:
-      -- we know that c begins s (beginsCS)
-      -- we know that c uppercase would be a contradiction (cNotUpper)
-      -- assuming s is capitalized...
+      -- Proof that s is not capitalized, spelled out:
+      -- We know that c begins s (beginsCS)
+      -- We know that c uppercase would be a contradiction (cNotUpper)
+      -- Assuming s *were* capitalized...
       --   i.e. exists d:Char such that d begins s and d is upper
       --   c = d (beginsUnique)
-      --   therefore c is upper too (dUpper)
-      --   which contradicts (cNotUpper)
+      --   Therefore c is upper too (dUpper)
+      --   Which contradicts (cNotUpper)
       -- 
-      -- so s is definitely not capitalized 
-      -- 
-      -- ... if c begins s and c is not uppercase, s is not capitalized
+      -- Alternatively: if c begins s and c is not uppercase, s is not capitalized
       let Refl = beginsUnique beginsCS beginsDS in cNotUpper dUpper)
-  No isEmpty => No (\(MkIsCapitalized {c} be upper) => isEmpty (c ** be))
+  -- Proof that empty string is not capitalized:
+  -- Assuming it were capitalized, then c begins s for some c.
+  -- Which contradicts the fact s is known to have no beginning.
+  No noBegin => No (\(MkIsCapitalized {c} be upper) => noBegin (c ** be))
