@@ -50,9 +50,20 @@ data IsCapitalized : String -> Type where
 
 isCapitalized : (s : String) -> Dec (IsCapitalized s)
 isCapitalized s = case isNonEmpty s of
-  Yes (c ** prf) => case isUpper' c of
-    Yes prf' => Yes (MkIsCapitalized prf prf')
-    No contra => No (\(MkIsCapitalized be upper) =>
-      let Refl = beginsUnique prf be in contra upper)
-  No contra => No (\(MkIsCapitalized {c} be upper) => contra (c ** be))
-
+  Yes (c ** beginsCS) => case isUpper' c of
+    Yes cUpper => Yes (MkIsCapitalized beginsCS cUpper)
+    No cNotUpper => No (\(MkIsCapitalized beginsDS dUpper) =>
+      -- argument spelled out:
+      -- we know that c begins s (beginsCS)
+      -- we know that c uppercase would be a contradiction (cNotUpper)
+      -- assuming s is capitalized...
+      --   i.e. exists d:Char such that d begins s and d is upper
+      --   c = d (beginsUnique)
+      --   therefore c is upper too (dUpper)
+      --   which contradicts (cNotUpper)
+      -- 
+      -- so s is definitely not capitalized 
+      -- 
+      -- ... if c begins s and c is not uppercase, s is not capitalized
+      let Refl = beginsUnique beginsCS beginsDS in cNotUpper dUpper)
+  No isEmpty => No (\(MkIsCapitalized {c} be upper) => isEmpty (c ** be))
