@@ -41,7 +41,7 @@ beginsUnique {c1} {c2} _ _ = believe_me (Refl {A=Char} {x=c1})
 
 isNonEmpty : (s : String) -> Dec (c:Char ** Begins c s)
 isNonEmpty s with (strM s)
-  isNonEmpty ""             | StrNil = No (\(_ ** beginsEmpty) => beginsNonEmpty beginsEmpty)
+  isNonEmpty ""             | StrNil         = No (\(_ ** beginsEmpty) => beginsNonEmpty beginsEmpty)
   isNonEmpty (strCons x xs) | (StrCons x xs) = Yes (x ** MkBegins x xs)
 
 isNonEmptyNoWith : (s : String) -> Dec (c:Char ** Begins c s)
@@ -72,4 +72,4 @@ isCapitalized s = case isNonEmpty s of
   -- Proof that empty string is not capitalized:
   -- Assuming it were capitalized, then c begins s for some c.
   -- Which contradicts the fact s is known to have no beginning.
-  No noBegin => No (\(MkIsCapitalized {c} be upper) => noBegin (c ** be))
+  No noBegin => No (\(MkIsCapitalized {c} beginsCS cUpper) => noBegin (c ** beginsCS))
